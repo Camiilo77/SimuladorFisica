@@ -1,55 +1,45 @@
 import streamlit as st
-from emsim.core.cylinder import capacitance_coaxial_cylinder, potential_coaxial, latex_deduction
-from emsim.plot_utils import plot_cylinder  # Debes crear esta función para la gráfica 3D
-import numpy as np
+from emsim.core.cylinder import solve_coaxial_cylinder
+from emsim.plot_utils import plot_cylinder
 
 def main():
-    st.markdown("## Capacitancia de Cilindro/Coaxial")
-    st.markdown("### Deducción y fórmula")
-    st.latex(latex_deduction())
+    st.markdown("## Cilindro coaxial (vacío)")
+    st.markdown("Completa los datos conocidos, deja en cero los que quieres calcular. Siempre tendrás la figura visible.")
 
-    st.sidebar.subheader("Parámetros físicos")
-    length = st.sidebar.number_input(
-        "Longitud [m]", min_value=0.0001, value=0.10,
-        help="Longitud del cilindro"
-    )
-    radius_inner = st.sidebar.number_input(
-        "Radio interior (a) [m]", min_value=0.0001, value=0.01,
-        help="Radio del cilindro interno"
-    )
-    radius_outer = st.sidebar.number_input(
-        "Radio exterior (b) [m]", min_value=radius_inner+1e-6, value=0.03,
-        help="Radio del cilindro externo (b > a)"
-    )
-    epsilon_r = st.sidebar.number_input(
-        "Permitividad relativa (εᵣ)", min_value=1.0, value=1.0,
-        help="Material dieléctrico entre los cilindros"
-    )
-    charge = st.sidebar.number_input(
-        "Carga total [C]", value=1e-9,
-        help="Carga depositada entre los cilindros"
-    )
+    length = st.sidebar.number_input("Longitud (m)", min_value=0.0, value=0.0, step=0.001, format="%.5f") or None
+    r_in = st.sidebar.number_input("Radio interior (m)", min_value=0.0, value=0.0, step=0.0001, format="%.5f") or None
+    r_out = st.sidebar.number_input("Radio exterior (m)", min_value=0.0, value=0.0, step=0.0001, format="%.5f") or None
+    capacitance = st.sidebar.number_input("Capacitancia (F)", min_value=0.0, value=0.0, step=1e-12, format="%.5e") or None
+    voltage = st.sidebar.number_input("Voltaje (V)", min_value=0.0, value=0.0, step=0.01, format="%.2f") or None
+    charge = st.sidebar.number_input("Carga (C)", min_value=0.0, value=0.0, step=1e-12, format="%.5e") or None
+    area = st.sidebar.number_input("Área lateral interna (m²)", min_value=0.0, value=0.0, step=0.001, format="%.5f") or None
+    volume = st.sidebar.number_input("Volumen interno (m³)", min_value=0.0, value=0.0, step=1e-6, format="%.6f") or None
 
-    # Cálculo de capacitancia
-    C = capacitance_coaxial_cylinder(length, radius_inner, radius_outer, epsilon_r)
-    
-    # Potencial para punto entre cilindros (r > a y r < b)
-    r_eval = st.sidebar.number_input(
-        "Radio para potencial [m]", min_value=radius_inner+1e-6, max_value=radius_outer-1e-6, value=(radius_outer+radius_inner)/2,
-        help="Punto entre cilindros para evaluar V"
+    if length == 0.0: length = None
+    if r_in == 0.0: r_in = None
+    if r_out == 0.0: r_out = None
+    if capacitance == 0.0: capacitance = None
+    if voltage == 0.0: voltage = None
+    if charge == 0.0: charge = None
+    if area == 0.0: area = None
+    if volume == 0.0: volume = None
+
+    result = solve_coaxial_cylinder(length=length, r_in=r_in, r_out=r_out, capacitance=capacitance,
+                                    charge=charge, voltage=voltage, area=area, volume=volume)
+    st.markdown("### Resultados automáticos")
+    st.write(f"**Longitud**: {result['length']:.5f} m" if result['length'] else "Longitud no definida")
+    st.write(f"**Radio interior**: {result['r_in']:.5f} m" if result['r_in'] else "radio interior no definido")
+    st.write(f"**Radio exterior**: {result['r_out']:.5f} m" if result['r_out'] else "radio exterior no definido")
+    st.write(f"**Capacitancia**: {result['capacitance']:.5e} F" if result['capacitance'] else "Capacitancia no definida")
+    st.write(f"**Voltaje**: {result['voltage']:.5f} V" if result['voltage'] else "Voltaje no definido")
+    st.write(f"**Carga**: {result['charge']:.5e} C" if result['charge'] else "Carga no definida")
+    st.write(f"**Área interna lateral**: {result['area']:.5f} m²" if result['area'] else "Área no definida")
+    st.write(f"**Volumen interno**: {result['volume']:.6f} m³" if result['volume'] else "Volumen no definido")
+
+    # Figura: valores estándar si no hay input físico válido
+    fig = plot_cylinder(
+        length_m = result['length'] if (result['length'] and result['length'] > 0) else 0.1,
+        r_in_m = result['r_in'] if (result['r_in'] and result['r_in'] > 0) else 0.01,
+        r_out_m = result['r_out'] if (result['r_out'] and result['r_out'] > 0 and result['r_out'] > result['r_in']) else 0.02
     )
-    V = potential_coaxial(charge, length, radius_inner, r_eval) if C else None
-
-    # Resultados
-    st.markdown("### Resultados físicos")
-    if C and radius_outer > radius_inner:
-        st.write(f"**Capacitancia:** {C:.3e} F")
-        if V:
-            st.write(f"**Potencial en r = {r_eval:.3f} m:** {V:.3e} V")
-    else:
-        st.error("Verifica todos los parámetros y que b > a.")
-
-    # Gráfico (crear función plot_cylinder en plot_utils.py)
-    st.markdown("### Visualización geométrica")
-    fig = plot_cylinder(length, radius_inner, radius_outer)
     st.plotly_chart(fig, use_container_width=True)

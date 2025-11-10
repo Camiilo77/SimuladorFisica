@@ -1,43 +1,34 @@
 import streamlit as st
-from emsim.core.sphere import capacitance_sphere, potential_sphere, electric_field_outside_sphere, latex_deduction
-from emsim.plot_utils import plot_sphere  # Debes crear esta función para la gráfica 3D
-import numpy as np
+from emsim.core.sphere import solve_sphere
+from emsim.plot_utils import plot_sphere
 
 def main():
-    st.markdown("## Capacitancia de Esfera Conductora")
-    st.markdown("### Deducción y fórmula")
-    st.latex(latex_deduction())
+    st.markdown("## Esfera conductora (vacío)")
+    st.markdown("Completa el dato que tienes, deja en cero los que quieres calcular. Siempre verás la figura, aunque esté en ceros.")
 
-    st.sidebar.subheader("Parámetros físicos")
-    radius = st.sidebar.number_input(
-        "Radio de la esfera [m]", min_value=0.0001, value=0.05,
-        help="Radio de la esfera conductora"
+    radius = st.sidebar.number_input("Radio de la esfera (m)", min_value=0.0, value=0.0, step=0.0001, format="%.5f") or None
+    capacitance = st.sidebar.number_input("Capacitancia (F)", min_value=0.0, value=0.0, step=1e-12, format="%.5e") or None
+    voltage = st.sidebar.number_input("Voltaje (V)", min_value=0.0, value=0.0, step=0.01, format="%.2f") or None
+    charge = st.sidebar.number_input("Carga (C)", min_value=0.0, value=0.0, step=1e-12, format="%.5e") or None
+    area = st.sidebar.number_input("Área superficial (m²)", min_value=0.0, value=0.0, step=0.001, format="%.5f") or None
+
+    if radius == 0.0: radius = None
+    if capacitance == 0.0: capacitance = None
+    if voltage == 0.0: voltage = None
+    if charge == 0.0: charge = None
+    if area == 0.0: area = None
+
+    result = solve_sphere(radius=radius, capacitance=capacitance, charge=charge, voltage=voltage, area=area)
+    st.markdown("### Resultados automáticos")
+    st.write(f"**Radio**: {result['radius']:.5f} m" if result['radius'] else "Radio no definido")
+    st.write(f"**Capacitancia**: {result['capacitance']:.5e} F" if result['capacitance'] else "Capacitancia no definida")
+    st.write(f"**Voltaje**: {result['voltage']:.5f} V" if result['voltage'] else "Voltaje no definido")
+    st.write(f"**Carga**: {result['charge']:.5e} C" if result['charge'] else "Carga no definida")
+    st.write(f"**Área superficial**: {result['area']:.5f} m²" if result['area'] else "Área no definida")
+
+    # Figura: si no hay radio calculado, usa valor estándar
+    fig = plot_sphere(
+        radius_m = result['radius'] if (result['radius'] and result['radius'] > 0) else 0.05,
+        charge = result['charge']
     )
-    charge = st.sidebar.number_input(
-        "Carga total [C]", value=1e-9,
-        help="Carga depositada en la esfera"
-    )
-
-    # Cálculos
-    C = capacitance_sphere(radius)
-    V = potential_sphere(charge, radius) if C else None
-    r_eval = st.sidebar.number_input(
-        "Distancia radial para campo externo [m]", min_value=radius+1e-6, value=radius+0.02,
-        help="Punto para evaluar el campo fuera de la esfera (r > radio)"
-    )
-    E = electric_field_outside_sphere(charge, r_eval) if r_eval and charge else None
-
-    # Resultados
-    st.markdown("### Resultados físicos")
-    if C:
-        st.write(f"**Capacitancia:** {C:.3e} F")
-        st.write(f"**Potencial en la superficie:** {V:.3e} V")
-        if E:
-            st.write(f"**Campo eléctrico fuera (r = {r_eval:.3f} m):** {E:.3e} N/C")
-    else:
-        st.error("Verifica que el radio sea positivo.")
-
-    # Gráfico (crear o adaptar la función plot_sphere en plot_utils.py)
-    st.markdown("### Visualización geométrica y campo")
-    fig = plot_sphere(radius, charge)
     st.plotly_chart(fig, use_container_width=True)

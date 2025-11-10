@@ -1,53 +1,50 @@
-import numpy as np
+from emsim.utils.constants import EPSILON_0
 
-# Constantes físicas
-EPSILON_0 = 8.854e-12  # Vacío [F/m]
+# Dado cualquier combinación de (area, distance, capacitance, voltage, charge), calcula los otros posibles
+def solve_parallel_plates(area=None, distance=None, capacitance=None, voltage=None, charge=None):
+    # C = e0 * A / d
+    # Q = C * V
+    # V = Q / C
+    # A = C * d / e0
+    # d = e0 * A / C
 
-def capacitance_parallel_plates(area_m2, distance_m, epsilon_r=1.0):
-    """
-    Calcula la capacitancia para placas paralelas.
-    area_m2: área de las placas (m²)
-    distance_m: distancia entre placas (m)
-    epsilon_r: permitividad relativa del material intermedio
-    return: capacitancia (Farads)
-    """
-    if area_m2 <= 0 or distance_m <= 0 or epsilon_r <= 0:
-        return None
-    return EPSILON_0 * epsilon_r * area_m2 / distance_m
+    result = {}
 
-def electric_field_parallel_plates(voltage_V, distance_m):
-    """
-    Calcula el campo eléctrico entre placas ideales.
-    voltage_V: diferencia de potencial (V)
-    distance_m: separación entre placas (m)
-    return: campo eléctrico (N/C)
-    """
-    if distance_m == 0:
-        return None
-    return voltage_V / distance_m
+    # Determinaciones secuenciales
+    if capacitance is None and area and distance:
+        capacitance = EPSILON_0 * area / distance
+    if area is None and capacitance and distance:
+        area = (capacitance * distance) / EPSILON_0
+    if distance is None and capacitance and area:
+        distance = (EPSILON_0 * area) / capacitance
 
-def potential_parallel_plates(charge_C, capacitance_F):
-    """
-    Calcula el potencial entre placas dado Q y C.
-    charge_C: carga entre placas (Coulomb)
-    capacitance_F: capacitancia (Farads)
-    """
-    if capacitance_F == 0:
-        return None
-    return charge_C / capacitance_F
+    # Volver a intentar capacitance si ahora tenemos area o distance
+    if capacitance is None and area and distance:
+        capacitance = EPSILON_0 * area / distance
 
-def latex_deduction():
-    """
-    Devuelve la deducción de la fórmula en formato LaTeX para la UI.
-    """
-    return r"""
-    \[
-    C = \varepsilon_0\,\varepsilon_r\,\frac{A}{d}
-    \]
-    Donde:
-    - \(C\) = capacitancia [F]
-    - \(\varepsilon_0\) = permitividad del vacío (\(8.854 \times 10^{-12} \,\text{F/m}\))
-    - \(\varepsilon_r\) = permitividad relativa del dieléctrico
-    - \(A\) = área de cada placa [m²]
-    - \(d\) = distancia entre placas [m]
-    """
+    # Cálculos relacionados con Q, V, C
+    if charge is None and capacitance and voltage is not None:
+        charge = capacitance * voltage
+    if voltage is None and charge is not None and capacitance:
+        voltage = charge / capacitance
+    if capacitance is None and charge is not None and voltage is not None:
+        capacitance = charge / voltage
+
+    # Campo eléctrico ideal
+    if voltage is not None and distance:
+        field = voltage / distance
+    else:
+        field = None
+
+    # Resumen
+    result.update({
+        'area': area,
+        'distance': distance,
+        'capacitance': capacitance,
+        'voltage': voltage,
+        'charge': charge,
+        'field': field
+    })
+    return result
+
+

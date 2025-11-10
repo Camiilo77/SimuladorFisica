@@ -1,50 +1,38 @@
+from emsim.utils.constants import EPSILON_0
 import numpy as np
 
-# Constantes físicas
-EPSILON_0 = 8.854e-12  # Vacío [F/m]
+def solve_sphere(radius=None, capacitance=None, charge=None, voltage=None, area=None):
+    # C = 4 * pi * e0 * r
+    # Q = C V
+    # V = Q / C
+    # area = 4 * pi * r^2
+    result = {}
 
-def capacitance_sphere(radius_m):
-    """
-    Calcula la capacitancia de una esfera conductora aislada.
-    radius_m: radio de la esfera (m)
-    return: capacitancia (Farads)
-    """
-    if radius_m <= 0:
-        return None
-    return 4 * np.pi * EPSILON_0 * radius_m
+    # Definición básica
+    if capacitance is None and radius:
+        capacitance = 4 * np.pi * EPSILON_0 * radius
+    if radius is None and capacitance:
+        radius = capacitance / (4 * np.pi * EPSILON_0)
 
-def potential_sphere(charge_C, radius_m):
-    """
-    Calcula el potencial eléctrico en la superficie de una esfera cargada.
-    charge_C: carga total en la esfera (C)
-    radius_m: radio (m)
-    return: potencial sobre la superficie (V)
-    """
-    if radius_m == 0:
-        return None
-    return (1 / (4 * np.pi * EPSILON_0)) * (charge_C / radius_m)
+    if charge is None and capacitance and voltage is not None:
+        charge = capacitance * voltage
+    if voltage is None and charge is not None and capacitance:
+        voltage = charge / capacitance
 
-def electric_field_outside_sphere(charge_C, radius_eval_m):
-    """
-    Campo eléctrico fuera de la esfera: se comporta como carga puntual.
-    charge_C: carga total (C)
-    radius_eval_m: distancia desde el centro (m)
-    return: campo eléctrico (N/C)
-    """
-    if radius_eval_m == 0:
-        return None
-    return (1 / (4 * np.pi * EPSILON_0)) * (charge_C / radius_eval_m**2)
+    # Área superficial
+    if area is None and radius:
+        area = 4 * np.pi * radius**2
+    if radius is None and area:
+        radius = (area / (4 * np.pi))**0.5
 
-def latex_deduction():
-    """
-    Devuelve deducción LaTeX para capacitancia de esfera.
-    """
-    return r"""
-    \[
-    C = 4\pi\varepsilon_0\,r
-    \]
-    Donde:
-    - \(C\) = capacitancia [F]
-    - \(\varepsilon_0\) = permitividad del vacío (\(8.854 \times 10^{-12} \,\text{F/m}\))
-    - \(r\) = radio de la esfera [m]
-    """
+    if capacitance is None and radius:
+        capacitance = 4 * np.pi * EPSILON_0 * radius
+
+    result.update({
+        'radius': radius,
+        'capacitance': capacitance,
+        'charge': charge,
+        'voltage': voltage,
+        'area': area
+    })
+    return result
