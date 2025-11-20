@@ -8,9 +8,9 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))   # ruta: /src
 sys.path.append(BASE_DIR)
 
 import streamlit as st
-from emsim.ui.pages.plates_page import main as plates_page
-from emsim.ui.pages.sphere_page import main as sphere_page
-from emsim.ui.pages.cylinder_page import main as cylinder_page
+from src.emsim.ui.pages.plates_page import main as plates_page
+from src.emsim.ui.pages.sphere_page import main as sphere_page
+from src.emsim.ui.pages.cylinder_page import main as cylinder_page
 
 
 PAGES = {
