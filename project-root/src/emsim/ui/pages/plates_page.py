@@ -3,53 +3,92 @@ from emsim.core.parallel_plates import solve_parallel_plates
 from emsim.plot_utils import plot_parallel_plates
 
 def main():
-    st.markdown("## Capacitor de placas paralelas (vacío)")
-    st.markdown("Completa los datos que conozcas y deja vacío el que quieres que se calcule (pon 0 o deja en blanco):")
+        # --------------------------
+    # Estilos CSS personalizados
+    # --------------------------
+    st.markdown("""
+    <style>
 
-    # Entradas (puedes ajustar los min_value)
-    area = st.sidebar.number_input(
-        "Área de placa (m²) [0 si quieres calcular]", min_value=0.0, value=0.0,
-        step=0.001, format="%.5f"
-    ) or None
-    separation = st.sidebar.number_input(
-        "Distancia entre placas (m) [0 si quieres calcular]", min_value=0.0, value=0.0,
-        step=0.0001, format="%.5f"
-    ) or None
-    capacitance = st.sidebar.number_input(
-        "Capacitancia (F) [0 si quieres calcular]", min_value=-90000.0, value=0.0,
-        step=1e-12, format="%.5e"
-    ) or None
-    voltage = st.sidebar.number_input(
-        "Voltaje (V) [0 si quieres calcular]", min_value=-90000.0, value=0.0,
-        step=0.01, format="%.2f"
-    ) or None
-    charge = st.sidebar.number_input(
-        "Carga (C) [0 si quieres calcular]", min_value=-9000.0, value=0.0,
-        step=1e-12, format="%.5e"
-    ) or None
+        /* ================================
+           SIDEBAR OSCURO + TEXTO LEGIBLE
+           ================================ */
+        section[data-testid="stSidebar"] {
+            background-color: #0E1117;
+            border-right: 1px solid #333333;
+        }
 
-    # Si el usuario deja en cero o None, la función lo calcula
-    if area == 0.0:
-        area = None
-    if separation == 0.0:
-        separation = None
-    if capacitance == 0.0:
-        capacitance = None
-    if voltage == 0.0:
-        voltage = None
-    if charge == 0.0:
-        charge = None
+        section[data-testid="stSidebar"] * {
+            color: #DCE3EB !important;
+            font-size: 0.95rem;
+        }
 
-    st.markdown("### Resultados automáticos")
-    result = solve_parallel_plates(area=area, distance=separation, capacitance=capacitance, voltage=voltage, charge=charge)
-    st.write(f"**Área de placa**: {result['area']:.5f} m²" if result['area'] else "Área no definida")
-    st.write(f"**Distancia entre placas**: {result['distance']:.5f} m" if result['distance'] else "Distancia no definida")
-    st.write(f"**Capacitancia**: {result['capacitance']:.5e} F" if result['capacitance'] else "Capacitancia no definida")
-    st.write(f"**Voltaje**: {result['voltage']:.5f} V" if result['voltage'] else "Voltaje no definido")
-    st.write(f"**Carga**: {result['charge']:.5e} C" if result['charge'] else "Carga no definida")
-    st.write(f"**Campo eléctrico ideal**: {result['field']:.3e} N/C" if result['field'] else "Campo E no definido")
+        /* ================================
+           CONTENEDOR PRINCIPAL
+           ================================ */
+        .block-container {
+            padding-top: 2rem;
+        }
 
-    # Gráfica
+        /* ================================
+           MÉTRICAS OSCURAS
+           ================================ */
+        div[data-testid="metric-container"] {
+            background: #1A1D23;
+            border: 1px solid #2A2D33;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        div[data-testid="metric-container"] label {
+            color: #E0E6ED !important;
+        }
+
+        div[data-testid="metric-container"] span {
+            color: #B5C4D1 !important;
+        }
+
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("## 🧪 Capacitor de placas paralelas (vacío)")
+    st.markdown("Introduce los datos conocidos y deja en cero los que deseas calcular.")
+
+    # Sidebar
+    st.sidebar.markdown("## ⚙️ Parámetros del sistema")
+
+    with st.sidebar.expander("📐 Geometría"):
+        area = st.number_input("Área (m²)", min_value=0.0, value=0.0) or None
+        distance = st.number_input("Distancia (m)", min_value=0.0, value=0.0) or None
+
+    with st.sidebar.expander("⚡ Parámetros eléctricos"):
+        capacitance = st.number_input("Capacitancia (F)", min_value=0.0, value=0.0) or None
+        voltage = st.number_input("Voltaje (V)", min_value=0.0, value=0.0) or None
+        charge = st.number_input("Carga (C)", min_value=0.0, value=0.0) or None
+
+    # Replace zeros
+    for x in ["area", "distance", "capacitance", "voltage", "charge"]:
+        if locals()[x] == 0.0:
+            locals()[x] = None
+
+    # Compute
+    result = solve_parallel_plates(area, distance, capacitance, voltage, charge)
+
+    st.markdown("## 🧮 Resultados")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.metric("Área (m²)", f"{result['area']:.5f}" if result['area'] else "—")
+        st.metric("Distancia (m)", f"{result['distance']:.5f}" if result['distance'] else "—")
+        st.metric("Voltaje (V)", f"{result['voltage']:.5f}" if result['voltage'] else "—")
+
+    with col2:
+        st.metric("Capacitancia (F)", f"{result['capacitance']:.5e}" if result['capacitance'] else "—")
+        st.metric("Carga (C)", f"{result['charge']:.5e}" if result['charge'] else "—")
+        st.metric("Campo E (N/C)", f"{result['field']:.3e}" if result['field'] else "—")
+
+    # Visualization
+    st.markdown("## 📊 Visualización")
     fig = plot_parallel_plates(
         area_m2 = result['area'] or 0.01,
         distance_m = result['distance'] or 0.01,

@@ -2,33 +2,91 @@ import streamlit as st
 from emsim.core.sphere import solve_sphere
 from emsim.plot_utils import plot_sphere
 
+
 def main():
-    st.markdown("## Esfera conductora (vacío)")
-    st.markdown("Completa el dato que tienes, deja en cero los que quieres calcular. Siempre verás la figura, aunque esté en ceros.")
+       # --------------------------
+    # Estilos CSS personalizados
+    # --------------------------
+    st.markdown("""
+    <style>
 
-    radius = st.sidebar.number_input("Radio de la esfera (m)", min_value=0.0, value=0.0, step=0.0001, format="%.5f") or None
-    capacitance = st.sidebar.number_input("Capacitancia (F)", min_value=0.0, value=0.0, step=1e-12, format="%.5e") or None
-    voltage = st.sidebar.number_input("Voltaje (V)", min_value=0.0, value=0.0, step=0.01, format="%.2f") or None
-    charge = st.sidebar.number_input("Carga (C)", min_value=0.0, value=0.0, step=1e-12, format="%.5e") or None
-    area = st.sidebar.number_input("Área superficial (m²)", min_value=0.0, value=0.0, step=0.001, format="%.5f") or None
+        /* ================================
+           SIDEBAR OSCURO + TEXTO LEGIBLE
+           ================================ */
+        section[data-testid="stSidebar"] {
+            background-color: #0E1117;
+            border-right: 1px solid #333333;
+        }
 
-    if radius == 0.0: radius = None
-    if capacitance == 0.0: capacitance = None
-    if voltage == 0.0: voltage = None
-    if charge == 0.0: charge = None
-    if area == 0.0: area = None
+        section[data-testid="stSidebar"] * {
+            color: #DCE3EB !important;
+            font-size: 0.95rem;
+        }
 
-    result = solve_sphere(radius=radius, capacitance=capacitance, charge=charge, voltage=voltage, area=area)
-    st.markdown("### Resultados automáticos")
-    st.write(f"**Radio**: {result['radius']:.5f} m" if result['radius'] else "Radio no definido")
-    st.write(f"**Capacitancia**: {result['capacitance']:.5e} F" if result['capacitance'] else "Capacitancia no definida")
-    st.write(f"**Voltaje**: {result['voltage']:.5f} V" if result['voltage'] else "Voltaje no definido")
-    st.write(f"**Carga**: {result['charge']:.5e} C" if result['charge'] else "Carga no definida")
-    st.write(f"**Área superficial**: {result['area']:.5f} m²" if result['area'] else "Área no definida")
+        /* ================================
+           CONTENEDOR PRINCIPAL
+           ================================ */
+        .block-container {
+            padding-top: 2rem;
+        }
 
-    # Figura: si no hay radio calculado, usa valor estándar
+        /* ================================
+           MÉTRICAS OSCURAS
+           ================================ */
+        div[data-testid="metric-container"] {
+            background: #1A1D23;
+            border: 1px solid #2A2D33;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        div[data-testid="metric-container"] label {
+            color: #E0E6ED !important;
+        }
+
+        div[data-testid="metric-container"] span {
+            color: #B5C4D1 !important;
+        }
+
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("## ⚪ Esfera conductora (vacío)")
+    st.markdown("Completa los datos conocidos y deja en cero los que deseas calcular.")
+
+    st.sidebar.markdown("## ⚙️ Parámetros")
+
+    with st.sidebar.expander("📐 Geometría"):
+        radius = st.number_input("Radio (m)", min_value=0.0, value=0.0) or None
+
+    with st.sidebar.expander("⚡ Electricidad"):
+        capacitance = st.number_input("Capacitancia (F)", min_value=0.0, value=0.0) or None
+        voltage = st.number_input("Voltaje (V)", min_value=0.0, value=0.0) or None
+        charge = st.number_input("Carga (C)", min_value=0.0, value=0.0) or None
+        area = st.number_input("Área superficial (m²)", min_value=0.0, value=0.0) or None
+
+    for x in ["radius", "capacitance", "voltage", "charge", "area"]:
+        if locals()[x] == 0.0:
+            locals()[x] = None
+
+    result = solve_sphere(radius, capacitance, charge, voltage, area)
+
+    st.markdown("## 🧮 Resultados")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric("Radio (m)", f"{result['radius']:.5f}" if result['radius'] else "—")
+        st.metric("Voltaje (V)", f"{result['voltage']:.5f}" if result['voltage'] else "—")
+
+    with col2:
+        st.metric("Capacitancia (F)", f"{result['capacitance']:.5e}" if result['capacitance'] else "—")
+        st.metric("Carga (C)", f"{result['charge']:.5e}" if result['charge'] else "—")
+
+    st.markdown("## 📊 Visualización")
     fig = plot_sphere(
-        radius_m = result['radius'] if (result['radius'] and result['radius'] > 0) else 0.05,
+        radius_m = result['radius'] or 0.05,
         charge = result['charge']
     )
     st.plotly_chart(fig, use_container_width=True)
