@@ -1,4 +1,4 @@
-from emsim.utils.constants import EPSILON_0
+from src.emsim.utils.constants import EPSILON_0
 import numpy as np
 
 def solve_coaxial_cylinder(length=None, r_in=None, r_out=None, capacitance=None, charge=None, voltage=None, area=None, volume=None):

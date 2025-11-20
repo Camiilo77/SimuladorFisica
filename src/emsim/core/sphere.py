@@ -1,4 +1,4 @@
-from emsim.utils.constants import EPSILON_0
+from src.emsim.utils.constants import EPSILON_0
 import numpy as np
 
 def solve_sphere(radius=None, capacitance=None, charge=None, voltage=None, area=None):

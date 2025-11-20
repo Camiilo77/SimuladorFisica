@@ -1,4 +1,4 @@
-from emsim.utils.constants import EPSILON_0
+from src.emsim.utils.constants import EPSILON_0
 
 # Dado cualquier combinación de (area, distance, capacitance, voltage, charge), calcula los otros posibles
 def solve_parallel_plates(area=None, distance=None, capacitance=None, voltage=None, charge=None):

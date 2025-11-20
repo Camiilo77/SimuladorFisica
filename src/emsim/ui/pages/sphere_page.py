@@ -1,6 +1,6 @@
 import streamlit as st
-from emsim.core.sphere import solve_sphere
-from emsim.plot_utils import plot_sphere
+from src.emsim.core.sphere import solve_sphere
+from src.emsim.plot_utils import plot_sphere
 
 
 def main():

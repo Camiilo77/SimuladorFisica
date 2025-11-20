@@ -1,6 +1,6 @@
 import streamlit as st
-from emsim.core.cylinder import solve_coaxial_cylinder
-from emsim.plot_utils import plot_cylinder
+from src.emsim.core.cylinder import solve_coaxial_cylinder
+from src.emsim.plot_utils import plot_cylinder
 
 def main():
 

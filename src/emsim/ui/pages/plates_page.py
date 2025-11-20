@@ -1,6 +1,6 @@
 import streamlit as st
-from emsim.core.parallel_plates import solve_parallel_plates
-from emsim.plot_utils import plot_parallel_plates
+from src.emsim.core.parallel_plates import solve_parallel_plates
+from src.emsim.plot_utils import plot_parallel_plates
 
 def main():
         # --------------------------
