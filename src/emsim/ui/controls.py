@@ -1,49 +1,140 @@
 import streamlit as st
 
+def float_input(label, default="", help=None, sidebar=True, key=None):
+    """
+    Entrada numérica flexible:
+    - Permite negativos
+    - Permite notación científica (ej: 1e-6)
+    - Si está vacío, retorna None
+    """
+    container = st.sidebar if sidebar else st
+
+    value = container.text_input(label, value=str(default), help=help, key=key)
+
+    if value.strip() == "":
+        return None
+
+    try:
+        return float(value)
+    except ValueError:
+        container.warning(f"⚠️ '{value}' no es un número válido. Usa formato decimal o científico.")
+        return None
+
+
+# ==============================================
+#  📐 CONTROLES PARA PLACAS PARALELAS
+# ==============================================
 def plates_controls():
-    """
-    Controles Streamlit para placas paralelas.
-    Devuelve: (área, distancia, epsilon_r, voltaje, carga)
-    """
     st.sidebar.subheader("Parámetros físicos")
-    area = st.sidebar.number_input(
+
+    area = float_input(
         "Área de cada placa [m²]",
-        min_value=0.00001,    # Permite valores muy pequeños (10 µm²)
-        value=0.01,           # Ejemplo default: 10cm x 10cm
-        step=0.00001,         # Paso mínimo
-        format="%.5f",        # Mostrar hasta 5 decimales
-        help="Área superficial efectiva de las placas (ej: 0.01 = 10cm x 10cm)"
+        default="0.01",
+        help="Área superficial efectiva (ej: 0.01 = 10cm x 10cm)."
     )
-    distance = st.sidebar.number_input(
+
+    distance = float_input(
         "Distancia entre placas [m]",
-        min_value=0.00001,    # Permite valores de hasta 10 µm
-        value=0.01,
-        step=0.00001,
-        format="%.5f",
-        help="Separación uniforme entre placas"
+        default="0.01",
+        help="Separación uniforme entre placas."
     )
-    epsilon_r = st.sidebar.number_input(
+
+    epsilon_r = float_input(
         "Permitividad relativa (εᵣ)",
-        min_value=1.85e-12,
-        value=8.85e-12,            
-        step=0.01,
-        format="%.2f",
-        help="Aire=1.00, papel≈3, vidrio≈5~10, etc."
+        default="8.85e-12",
+        help="Aire=1.00, papel≈3, vidrio≈5-10, etc."
     )
-    voltaje = st.sidebar.number_input(
+
+    voltaje = float_input(
         "Voltaje aplicado [V]",
-        min_value=0.0,
-        value=5.0,
-        step=0.01,
-        format="%.2f",
-        help="Diferencia de potencial entre placas"
+        default="5.0",
+        help="Diferencia de potencial entre placas."
     )
-    carga = st.sidebar.number_input(
+
+    carga = float_input(
         "Carga en placas [C]",
-        min_value=0.0,
-        value=0.0,
-        step=1e-9,
-        format="%.2e",
-        help="Si dejas en 0, se usará Q = C·V calculado automáticamente."
+        default="",
+        help="Si se deja vacío, se calcula automáticamente (Q = C·V)."
     )
+
     return area, distance, epsilon_r, voltaje, carga
+
+
+# ==============================================
+#  ⚫ CONTROLES PARA ESFERA CONDUCTORA
+# ==============================================
+def sphere_controls():
+    st.sidebar.subheader("Parámetros físicos")
+
+    radius = float_input(
+        "Radio de la esfera [m]",
+        default="0.1",
+        help="Radio exterior de la esfera conductora."
+    )
+
+    capacitance = float_input(
+        "Capacitancia [F]",
+        default="",
+        help="Déjalo vacío si deseas calcular C."
+    )
+
+    charge = float_input(
+        "Carga [C]",
+        default="",
+        help="Déjalo vacío si deseas calcular Q."
+    )
+
+    voltage = float_input(
+        "Voltaje [V]",
+        default="",
+        help="Déjalo vacío si deseas calcular V."
+    )
+
+    return radius, capacitance, charge, voltage
+
+
+# ==============================================
+#  📡 CONTROLES PARA CILINDRO / COAXIAL
+# ==============================================
+def cylinder_controls():
+    st.sidebar.subheader("Geometría")
+
+    length = float_input(
+        "Longitud [m]",
+        default="1.0",
+        help="Longitud del cilindro."
+    )
+
+    r_in = float_input(
+        "Radio interior [m]",
+        default="0.1",
+        help="Radio del conductor interno."
+    )
+
+    r_out = float_input(
+        "Radio exterior [m]",
+        default="0.2",
+        help="Radio del conductor externo."
+    )
+
+    st.sidebar.subheader("Parámetros eléctricos")
+
+    capacitance = float_input(
+        "Capacitancia [F]",
+        default="",
+        help="Déjalo vacío para calcular C."
+    )
+
+    charge = float_input(
+        "Carga [C]",
+        default="",
+        help="Déjalo vacío para calcular Q."
+    )
+
+    voltage = float_input(
+        "Voltaje [V]",
+        default="",
+        help="Déjalo vacío para calcular V."
+    )
+
+    return length, r_in, r_out, capacitance, charge, voltage

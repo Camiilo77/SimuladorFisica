@@ -2,16 +2,28 @@ import streamlit as st
 from src.emsim.core.sphere import solve_sphere
 from src.emsim.plot_utils import plot_sphere
 
+# ============================================
+# Función para permitir negativos y notación científica
+# ============================================
+def float_input(label, default=None, help=None):
+    raw = st.text_input(label, value=str(default) if default is not None else "", help=help)
+    try:
+        return float(raw)
+    except:
+        if raw.strip() != "":
+            st.warning(f"Valor no válido en '{label}'. Usa números, negativos o notación científica (ej: 1e-6).")
+        return None
 
 def main():
-       # --------------------------
+
+    # ============================================
     # Estilos CSS personalizados
-    # --------------------------
+    # ============================================
     st.markdown("""
     <style>
 
         /* ================================
-           SIDEBAR OSCURO + TEXTO LEGIBLE
+           Sidebar oscuro y texto legible
            ================================ */
         section[data-testid="stSidebar"] {
             background-color: #0E1117;
@@ -24,14 +36,14 @@ def main():
         }
 
         /* ================================
-           CONTENEDOR PRINCIPAL
+           Contenedor principal
            ================================ */
         .block-container {
             padding-top: 2rem;
         }
 
         /* ================================
-           MÉTRICAS OSCURAS
+           Métricas oscuras
            ================================ */
         div[data-testid="metric-container"] {
             background: #1A1D23;
@@ -49,31 +61,53 @@ def main():
             color: #B5C4D1 !important;
         }
 
+        /* ================================
+           Inputs con fondo diferenciado y borde color
+           ================================ */
+        div.stTextInput > div > input,
+        div.stNumberInput > div > input {
+            background-color: #1E1E2E !important;  /* fondo oscuro, distinto al sidebar */
+            color: #FFFFFF !important;             /* texto blanco */
+            border: 2px solid #FFA500 !important;  /* borde naranja */
+            border-radius: 6px !important;
+            padding: 6px !important;
+        }
+
     </style>
     """, unsafe_allow_html=True)
 
+    # ============================================
+    # Título principal
+    # ============================================
     st.markdown("## ⚪ Esfera conductora (vacío)")
-    st.markdown("Completa los datos conocidos y deja en cero los que deseas calcular.")
+    st.markdown("Completa los datos conocidos y deja vacío los que deseas calcular.")
 
-    st.sidebar.markdown("## ⚙️ Parámetros")
+    # ============================================
+    # Sidebar organizada
+    # ============================================
+    st.sidebar.markdown("## ⚙️ Parámetros del sistema")
 
     with st.sidebar.expander("📐 Geometría"):
-        radius = st.number_input("Radio (m)", min_value=0.0, value=0.0) or None
+        radius = float_input("Radio (m)", default="", help="Ej: 0.05, 2e-2")
 
-    with st.sidebar.expander("⚡ Electricidad"):
-        capacitance = st.number_input("Capacitancia (F)", min_value=0.0, value=0.0) or None
-        voltage = st.number_input("Voltaje (V)", min_value=0.0, value=0.0) or None
-        charge = st.number_input("Carga (C)", min_value=0.0, value=0.0) or None
-        area = st.number_input("Área superficial (m²)", min_value=0.0, value=0.0) or None
+    with st.sidebar.expander("⚡ Parámetros eléctricos"):
+        capacitance = float_input("Capacitancia (F)", default="", help="Ej: 1e-12")
+        voltage = float_input("Voltaje (V)", default="")
+        charge = float_input("Carga (C)", default="", help="Ej: 1e-6")
+        area = float_input("Área superficial (m²)", default="", help="Ej: 0.03")
 
-    for x in ["radius", "capacitance", "voltage", "charge", "area"]:
-        if locals()[x] == 0.0:
-            locals()[x] = None
+    # ============================================
+    # Cálculo automático
+    # ============================================
+    result = solve_sphere(
+        radius=radius,
+        capacitance=capacitance,
+        voltage=voltage,
+        charge=charge,
+        area=area
+    )
 
-    result = solve_sphere(radius, capacitance, charge, voltage, area)
-
-    st.markdown("## 🧮 Resultados")
-
+    st.markdown("## 🧮 Resultados automáticos")
     col1, col2 = st.columns(2)
 
     with col1:
@@ -83,10 +117,17 @@ def main():
     with col2:
         st.metric("Capacitancia (F)", f"{result['capacitance']:.5e}" if result['capacitance'] else "—")
         st.metric("Carga (C)", f"{result['charge']:.5e}" if result['charge'] else "—")
+        st.metric("Área superficial (m²)", f"{result['area']:.5f}" if result['area'] else "—")
 
-    st.markdown("## 📊 Visualización")
+    # ============================================
+    # Visualización
+    # ============================================
+    st.markdown("## 📊 Visualización de la esfera")
     fig = plot_sphere(
-        radius_m = result['radius'] or 0.05,
-        charge = result['charge']
+        radius_m=result['radius'] if (result['radius'] and result['radius'] > 0) else 0.05,
+        charge=result['charge'] if result['charge'] else 1e-6
     )
     st.plotly_chart(fig, use_container_width=True)
+
+if __name__ == "__main__":
+    main()
