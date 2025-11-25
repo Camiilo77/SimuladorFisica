@@ -111,7 +111,7 @@ def main():
 
     with col2:
         st.metric("Radio exterior (m)", f"{result['r_out']:.5f}" if result['r_out'] else "—")
-        st.metric("Voltaje (V)", f"{result['voltaje']:.5f}" if result['voltaje'] else "—")
+        st.metric("Voltaje (V)", f"{result['voltaje']:.5f}" if result['voltage'] else "—")
         st.metric("Carga (C)", f"{result['charge']:.5e}" if result['charge'] else "—")
         st.metric("Volumen interno (m³)", f"{result['volume']:.6f}" if result['volume'] else "—")
 
