@@ -7,6 +7,8 @@ def solve_parallel_plates(area=None, distance=None, capacitance=None, voltage=No
     # V = Q / C
     # A = C * d / e0
     # d = e0 * A / C
+    
+    
 
     result = {}
 
